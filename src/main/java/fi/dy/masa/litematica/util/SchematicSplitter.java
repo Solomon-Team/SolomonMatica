@@ -36,6 +36,7 @@ public class SchematicSplitter
 {
     /**
      * Splits a schematic into smaller chunks and saves them to a subfolder.
+     * Delegates to either fixed chunk size or KD-tree inventory-aware algorithm based on config.
      *
      * @param originalSchematic The schematic to split
      * @param originalFile The original file path (used to determine output directory)
@@ -49,6 +50,28 @@ public class SchematicSplitter
             return true; // Not an error, just disabled
         }
 
+        SplitMode mode = (SplitMode) Configs.Generic.SPLIT_MODE.getOptionListValue();
+
+        if (mode == SplitMode.KD_INVENTORY_AWARE)
+        {
+            return KDTreeSplitter.splitAndSaveSchematic(originalSchematic, originalFile, fileName);
+        }
+        else
+        {
+            return splitFixedChunkSize(originalSchematic, originalFile, fileName);
+        }
+    }
+
+    /**
+     * Splits a schematic using the fixed chunk size algorithm.
+     *
+     * @param originalSchematic The schematic to split
+     * @param originalFile The original file path (used to determine output directory)
+     * @param fileName The base filename without extension
+     * @return true if splitting was successful, false otherwise
+     */
+    private static boolean splitFixedChunkSize(LitematicaSchematic originalSchematic, Path originalFile, String fileName)
+    {
         int chunkSize = Configs.Generic.SPLIT_CHUNK_SIZE.getIntegerValue();
 
         try

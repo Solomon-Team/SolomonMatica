@@ -117,6 +117,11 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       AUTO_SPLIT_SCHEMATICS       = new ConfigBoolean("autoSplitSchematics", true).apply(GENERIC_KEY);
         public static final ConfigInteger       SPLIT_CHUNK_SIZE            = new ConfigInteger("splitChunkSize", 16, 1, 256).apply(GENERIC_KEY);
         public static final ConfigBoolean       SPLIT_GENERATE_MATERIAL_LISTS = new ConfigBoolean("splitGenerateMaterialLists", true).apply(GENERIC_KEY);
+        public static final ConfigOptionList    SPLIT_MODE                  = new ConfigOptionList("splitMode", SplitMode.KD_INVENTORY_AWARE).apply(GENERIC_KEY);
+        public static final ConfigInteger       SPLIT_MAX_STACKS            = new ConfigInteger("splitMaxStacks", 27, 1, 54).apply(GENERIC_KEY);
+        public static final ConfigInteger       SPLIT_MAX_BLOCKS            = new ConfigInteger("splitMaxBlocks", 1728, 1, 100000).apply(GENERIC_KEY);
+        public static final ConfigInteger       SPLIT_COARSE_CELL           = new ConfigInteger("splitCoarseCell", 4, 1, 16).apply(GENERIC_KEY);
+        public static final ConfigInteger       SPLIT_CANDIDATES_PER_AXIS   = new ConfigInteger("splitCandidatesPerAxis", 9, 3, 25).apply(GENERIC_KEY);
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 AREAS_PER_WORLD,
@@ -186,6 +191,11 @@ public class Configs implements IConfigHandler
                 UNHIDE_SCHEMATIC_PROJECTS,
                 AUTO_SPLIT_SCHEMATICS,
                 SPLIT_GENERATE_MATERIAL_LISTS,
+                SPLIT_MODE,
+                SPLIT_MAX_STACKS,
+                SPLIT_MAX_BLOCKS,
+                SPLIT_COARSE_CELL,
+                SPLIT_CANDIDATES_PER_AXIS,
 
                 PASTE_REPLACE_BEHAVIOR,
                 PASTE_LAYER_BEHAVIOR,
