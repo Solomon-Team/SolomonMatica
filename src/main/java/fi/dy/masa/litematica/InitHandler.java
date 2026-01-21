@@ -7,6 +7,8 @@ import fi.dy.masa.malilib.interfaces.IRenderer;
 import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
 import net.minecraft.client.MinecraftClient;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import fi.dy.masa.litematica.command.LoadSchematicCommand;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntitiesDataStorage;
@@ -50,5 +52,10 @@ public class InitHandler implements IInitializationHandler
 
         DataManager.getAreaSelectionsBaseDirectory();
         DataManager.getSchematicsBaseDirectory();
+
+        // Register client-side commands
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            LoadSchematicCommand.register(dispatcher);
+        });
     }
 }

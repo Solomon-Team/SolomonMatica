@@ -59,6 +59,7 @@ public class SchematicSplitter
                 ? fileName.substring(0, fileName.length() - LitematicaSchematic.FILE_EXTENSION.length())
                 : fileName;
             Path chunksDir = parentDir.resolve(baseFileName + "_chunks");
+            Files.createDirectories(chunksDir);
 
             Litematica.LOGGER.info("Starting schematic split for '{}' into {}x{}x{} chunks", fileName, chunkSize, chunkSize, chunkSize);
 
@@ -181,33 +182,28 @@ public class SchematicSplitter
                 return null;
             }
 
-            // Calculate the offset for this chunk relative to (0,0,0)
-            // This ensures all chunks align when placed at the same origin
-            // When dimensions are negative, we need to compensate for the chunk origin position
-            int signX = regionSize.getX() >= 0 ? 1 : -1;
-            int signY = regionSize.getY() >= 0 ? 1 : -1;
-            int signZ = regionSize.getZ() >= 0 ? 1 : -1;
+            // Calculate the min corner of the region relative to schematic origin
+            // regionPos is pos1 - origin, but container indices start from MIN corner
+            // We need to find the actual min corner when regionSize has negative components
+            BlockPos posEndRel = PositionUtils.getRelativeEndPositionFromAreaSize(regionSize).add(regionPos);
+            BlockPos posMinRel = PositionUtils.getMinCorner(regionPos, posEndRel);
 
-            // For negative dimensions, subtract chunk size to compensate for origin position
-            int offsetX = signX * chunkX * chunkSize + (signX < 0 ? -sizeX : 0);
-            int offsetY = signY * chunkY * chunkSize + (signY < 0 ? -sizeY : 0);
-            int offsetZ = signZ * chunkZ * chunkSize + (signZ < 0 ? -sizeZ : 0);
-
-            // Chunk position is relative to (0,0,0), not to regionPos
-            BlockPos chunkOffset = new BlockPos(offsetX, offsetY, offsetZ);
+            // Calculate the offset for this chunk relative to schematic origin
+            // Each chunk is offset by (chunkIndex * chunkSize) from the region's min corner
+            BlockPos chunkOffset = new BlockPos(
+                posMinRel.getX() + chunkX * chunkSize,
+                posMinRel.getY() + chunkY * chunkSize,
+                posMinRel.getZ() + chunkZ * chunkSize
+            );
 
             // Create an AreaSelection for the chunk
             AreaSelection chunkArea = new AreaSelection();
             chunkArea.setName(original.getMetadata().getName() + "_chunk");
 
-            // Create a box for this chunk region with proper positioning
-            // Calculate pos2 based on the sign of the original dimensions
-            int deltaX = regionSize.getX() >= 0 ? (sizeX - 1) : -(sizeX - 1);
-            int deltaY = regionSize.getY() >= 0 ? (sizeY - 1) : -(sizeY - 1);
-            int deltaZ = regionSize.getZ() >= 0 ? (sizeZ - 1) : -(sizeZ - 1);
-
+            // Create a box with pos1 at chunk offset, pos2 at chunk offset + size - 1
+            // This creates a standard positive-size box
             BlockPos pos1 = chunkOffset;
-            BlockPos pos2 = chunkOffset.add(deltaX, deltaY, deltaZ);
+            BlockPos pos2 = chunkOffset.add(sizeX - 1, sizeY - 1, sizeZ - 1);
             Box chunkBox = new Box(pos1, pos2, regionName);
             chunkArea.addSubRegionBox(chunkBox, true);
 
@@ -266,10 +262,10 @@ public class SchematicSplitter
 
             // Copy tile entities (block entities like chests, signs, etc.)
             Map<BlockPos, NbtCompound> originalTileEntities = original.getBlockEntityMapForRegion(regionName);
-            if (originalTileEntities != null && !originalTileEntities.isEmpty())
-            {
-                Map<BlockPos, NbtCompound> chunkTileEntities = new HashMap<>();
+            Map<BlockPos, NbtCompound> chunkTileEntities = chunkSchematic.getBlockEntityMapForRegion(regionName);
 
+            if (originalTileEntities != null && !originalTileEntities.isEmpty() && chunkTileEntities != null)
+            {
                 for (Map.Entry<BlockPos, NbtCompound> entry : originalTileEntities.entrySet())
                 {
                     BlockPos pos = entry.getKey();
@@ -296,18 +292,14 @@ public class SchematicSplitter
                         chunkTileEntities.put(localPos, tileEntityNbt);
                     }
                 }
-
-                // Note: Tile entities are already part of the container structure
-                // We cannot directly set them as the fields are private
-                // They will need to be handled differently or left empty
             }
 
             // Copy entities within the chunk bounds
             List<LitematicaSchematic.EntityInfo> originalEntities = original.getEntityListForRegion(regionName);
-            if (originalEntities != null && !originalEntities.isEmpty())
-            {
-                List<LitematicaSchematic.EntityInfo> chunkEntities = new ArrayList<>();
+            List<LitematicaSchematic.EntityInfo> chunkEntities = chunkSchematic.getEntityListForRegion(regionName);
 
+            if (originalEntities != null && !originalEntities.isEmpty() && chunkEntities != null)
+            {
                 for (LitematicaSchematic.EntityInfo entityInfo : originalEntities)
                 {
                     double ex = entityInfo.posVec.x;
@@ -338,9 +330,6 @@ public class SchematicSplitter
                         chunkEntities.add(new LitematicaSchematic.EntityInfo(localPos, entityNbt));
                     }
                 }
-
-                // Note: Entities are part of the internal structure
-                // Cannot set them directly due to private fields
             }
 
             chunkSchematic.getMetadata().setTotalBlocks(blockCount);
