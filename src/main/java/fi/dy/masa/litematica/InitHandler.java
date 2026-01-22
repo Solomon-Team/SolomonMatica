@@ -9,6 +9,8 @@ import fi.dy.masa.malilib.util.data.ModInfo;
 import net.minecraft.client.MinecraftClient;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import fi.dy.masa.litematica.command.LoadSchematicCommand;
+import fi.dy.masa.litematica.command.UploadSchematicCommand;
+import fi.dy.masa.litematica.compat.invnet.SchematicSyncHook;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntitiesDataStorage;
@@ -56,6 +58,10 @@ public class InitHandler implements IInitializationHandler
         // Register client-side commands
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             LoadSchematicCommand.register(dispatcher);
+            UploadSchematicCommand.register(dispatcher);
         });
+
+        // Initialize SchematicSyncHook for SolomonInvNetMod integration
+        SchematicSyncHook.initialize();
     }
 }

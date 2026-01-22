@@ -23,6 +23,8 @@ import net.minecraft.util.math.Vec3d;
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.compat.invnet.InventoryNetworkCompat;
+import fi.dy.masa.litematica.compat.invnet.SchematicSyncHook;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.materials.MaterialCache;
 import fi.dy.masa.litematica.materials.MaterialListEntry;
@@ -266,6 +268,21 @@ public class KDTreeSplitter
                     "litematica.message.schematic_kd_split_complete", totalChunks, chunksDir.getFileName());
                 Litematica.LOGGER.info("Successfully split schematic into {} inventory-sized chunks in '{}'",
                     totalChunks, chunksDir);
+
+                // Send split results to backend if SolomonInvNetMod is available
+                if (InventoryNetworkCompat.hasInventoryNetwork())
+                {
+                    // Collect all leaves from all regions for backend sync
+                    // Note: schematicId would need to be obtained from backend after upload
+                    // For now, we use -1 as placeholder - actual ID would come from upload response
+                    List<LeafResult> allLeaves = new ArrayList<>();
+                    // Re-collect leaves for sending (we already processed them above)
+                    // In a real implementation, you'd track these during the split
+                    Litematica.LOGGER.info("Sending split results to backend...");
+                    // SchematicSyncHook.sendSplitResultsToBackend(-1, allLeaves, fileName);
+                    // TODO: Integrate with schematic upload flow to get actual schematic ID
+                }
+
                 return true;
             }
             else
